@@ -214,7 +214,6 @@
           <h1 class="page-title">Lost &amp; Found Inventory</h1>
           <p class="page-meta">Full record of all items</p>
         </div>
-        <button class="btn gold" onclick="exportCSV()">↓ Export CSV</button>
       </div>
       <div class="stats-strip" id="statsStrip"></div>
       <div class="toolbar" style="margin-bottom:16px;">
@@ -255,10 +254,8 @@
       <div class="msec">Claim This Item</div>
       <div class="mform">
         <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="claimName" placeholder="Jane Smith"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="field"><label>Student ID</label><input type="text" id="claimStudentId" placeholder="S-20231"></div>
-          <div class="field"><label>EPS Email</label><input type="text" id="claimContact" placeholder="you@eastsideprep.org"></div>
-        </div>
+        <input type="hidden" id="claimStudentId" value="">
+        <div class="field"><label>EPS Email</label><input type="text" id="claimContact" placeholder="you@eastsideprep.org"></div>
         <button class="btn full" id="claimConfirmBtn" onclick="confirmClaim()" style="margin-top:4px">Confirm Claim</button>
       </div>
     </div>
@@ -308,27 +305,6 @@
           <div class="field" style="margin-bottom:0"><label>Admin Password</label><input type="text" id="pwdAdmin" placeholder="Admin password"></div>
           <button class="btn" style="padding:9px 14px;font-size:13px;align-self:flex-end" onclick="savePwd('admin')">Save</button>
         </div>
-      </div>
-
-      <div class="slabel" style="margin-top:4px">Google Sheets</div>
-      <div class="slabel">Step 1 — Create a blank Google Sheet</div>
-      <div class="info-box">Go to <strong>sheets.google.com</strong>, create a new blank spreadsheet. Leave it empty — the script adds headers on first run.</div>
-      <div class="slabel">Step 2 — Paste the Apps Script</div>
-      <div class="info-box">In your sheet click <strong>Extensions → Apps Script</strong>. Delete any existing code, paste the script below, then click <strong>Save (💾)</strong>.</div>
-      <div class="code-wrap">
-        <button class="copy-btn" onclick="copyScript()">⎘ Copy</button>
-        <div class="code-block" id="scriptBlock"></div>
-      </div>
-      <div class="slabel">Step 3 — Deploy as Web App</div>
-      <div class="info-box">Click <strong>Deploy → New Deployment</strong>. Click the gear ⚙ next to "Select type" → <strong>Web App</strong>. Set <em>Execute as: <strong>Me</strong></em> and <em>Who has access: <strong>Anyone</strong></em>. Click <strong>Deploy</strong>, authorize with your Google account, then copy the Web App URL.</div>
-      <div class="slabel">Step 4 — Paste URL &amp; Test</div>
-      <div class="field" style="margin-bottom:10px"><label>Web App URL</label><input type="text" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/…/exec" oninput="updateTestBtn()"></div>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:6px;">
-        <button class="btn full" onclick="saveSheetSettings()" style="margin-top:0">Save URL</button>
-        <button class="btn gold" id="testSheetBtn" onclick="testSheetConnection()" style="margin-top:0;white-space:nowrap;" disabled>🧪 Send Test Row</button>
-      </div>
-      <div class="info-box" style="margin-top:10px;border-left-color:var(--gold)">
-        <strong>After saving,</strong> click <strong>"Send Test Row"</strong> — it opens a new tab. If your sheet gets a new row labelled "TEST", everything is working. If the tab shows an error, your script isn't deployed correctly (re-check Step 3).
       </div>
     </div>
   </div>

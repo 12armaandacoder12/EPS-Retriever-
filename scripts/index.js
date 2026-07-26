@@ -1,85 +1,5 @@
-
-// ─── APPS SCRIPT ───────────────────────────────────
-const SCRIPT = `// EPS Retriever — Google Apps Script
-// ─────────────────────────────────────────────────────
-// HOW TO DEPLOY:
-//   1. Extensions → Apps Script → paste this → Save (💾)
-//   2. Deploy → New Deployment
-//   3. Type: Web App
-//   4. Execute as: Me
-//   5. Who has access: Anyone
-//   6. Click Deploy → Authorize → Allow
-//   7. Copy the Web App URL into EPS Retriever Settings ⚙️
-//
-// ⚠️  Already deployed? When you re-paste and save:
-//   Deploy → Manage Deployments → pencil → New Version → Deploy
-//   (The URL stays the same — no need to re-paste it in the app)
-// ─────────────────────────────────────────────────────
-
-function doGet(e) {
-  try {
-    var ss    = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName("Log") || ss.insertSheet("Log");
-
-    // Styled header row on first run
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow([
-        "Event","Timestamp","Item ID","Item Name","Category",
-        "Location Found","Description","Staff Name","Staff Email",
-        "Status","Claimed By","Student ID","Contact","Claimed At","Returned At"
-      ]);
-      sheet.getRange(1,1,1,15)
-           .setFontWeight("bold")
-           .setBackground("#1C3461")
-           .setFontColor("#FFFFFF");
-      sheet.setFrozenRows(1);
-    }
-
-    // Read URL query parameters (sent by the app as a GET form)
-    var p = e.parameter;
-    if (!p || !p.event) {
-      return ContentService
-        .createTextOutput("ok - no event")
-        .setMimeType(ContentService.MimeType.TEXT);
-    }
-
-    sheet.appendRow([
-      p.event          || "",
-      p.timestamp      || new Date().toISOString(),
-      p.id             || "",
-      p.name           || "",
-      p.category       || "",
-      p.location       || "",
-      p.description    || "",
-      p.staffName      || "",
-      p.staffEmail     || "",
-      p.status         || "",
-      p.claimedBy      || "",
-      p.claimedId      || "",
-      p.claimedContact || "",
-      p.claimedAt      || "",
-      p.returnedAt     || ""
-    ]);
-
-    return ContentService
-      .createTextOutput("ok")
-      .setMimeType(ContentService.MimeType.TEXT);
-
-  } catch(err) {
-    return ContentService
-      .createTextOutput("error: " + err.message)
-      .setMimeType(ContentService.MimeType.TEXT);
-  }
-}`;
-
-document.getElementById('scriptBlock').textContent = SCRIPT;
-function copyScript() {
-  navigator.clipboard.writeText(SCRIPT)
-    .then(()=>toast('Script copied!','ok'))
-    .catch(()=>toast('Select and copy the code manually','err'));
-}
-
 // ─── CONSTANTS ─────────────────────────────────────
+const SHEET_URL    = 'https://script.google.com/macros/s/AKfycbxDMGueHtWg13r2dhE_KeYL9v9O71UbqUmFWvj9bXP7J2V-GCt3ZNkyJD_DBQOtI-XZ/exec';
 const STORE_KEY    = 'eps_items_v5';
 const SETTINGS_KEY = 'eps_cfg_v5';
 const ADMIN_EMAIL  = 'amotwani@eastsideprep.org';
@@ -96,7 +16,6 @@ function loadSettings() {
   settings.pwdStudent    = settings.pwdStudent    || 'EPSeagles';
   settings.pwdFacilities = settings.pwdFacilities || 'EPSfacilities';
   settings.pwdAdmin      = settings.pwdAdmin      || 'EPSadmin2024';
-  settings.sheetUrl      = settings.sheetUrl      || '';
 }
 function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 
@@ -106,12 +25,6 @@ function savePwd(role) {
   if (!val) { toast('Code cannot be empty','err'); return; }
   settings[key] = val; saveSettings();
   toast('Access code updated','ok');
-}
-function saveSheetSettings() {
-  settings.sheetUrl = document.getElementById('sheetUrlInput').value.trim();
-  saveSettings(); updateSheetPill();
-  closeModal('settingsOverlay');
-  toast('Sheet settings saved','ok');
 }
 
 // ─── DATA ───────────────────────────────────────────
@@ -487,15 +400,8 @@ function openDetailModal(id) {
 // ─── SHEETS ─────────────────────────────────────────
 // Opens the Apps Script URL with query params in a hidden
 // window — bypasses every CORS/redirect issue completely.
-function buildSheetUrl(data) {
-  const params = Object.entries(data)
-    .map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(String(v||'')))
-    .join('&');
-  return settings.sheetUrl + '?' + params;
-}
 
 function logToSheet(eventType, item) {
-  if (!settings.sheetUrl) return;
 
   const data = {
     event:          eventType,
@@ -525,7 +431,7 @@ function logToSheet(eventType, item) {
 
     const form = document.createElement('form');
     form.method = 'GET';
-    form.action = settings.sheetUrl;
+    form.action = SHEET_URL;
     form.target = iframeName;
     form.style.display = 'none';
 
@@ -547,50 +453,21 @@ function logToSheet(eventType, item) {
   }
 }
 
-// Test button: opens sheet URL in a new tab so you can see if it works
-function testSheetConnection() {
-  const url = settings.sheetUrl;
-  if (!url) { toast('Save a URL first', 'err'); return; }
-  const testUrl = url + '?event=TEST&timestamp=' + encodeURIComponent(new Date().toISOString())
-    + '&name=Test+Item&category=Test&location=Test&status=test'
-    + '&id=test&description=Connection+test+from+EPS+Retriever'
-    + '&staffName=Admin&staffEmail=amotwani%40eastsideprep.org';
-  window.open(testUrl, '_blank');
-  toast('Test row sent — check your sheet and the new tab for errors', 'info');
-}
 
-function updateTestBtn() {
-  const val = document.getElementById('sheetUrlInput').value.trim();
-  document.getElementById('testSheetBtn').disabled = !val;
-}
-
-// ─── CSV ────────────────────────────────────────────
-function exportCSV() {
-  const h=['ID','Item Name','Category','Location','Description','Staff Name','Staff Email','Status','Date Added','Claimed By','Student ID','Contact','Claimed At','Returned At'];
-  const rows=items.map(i=>[i.id,i.name,i.category,i.locationFound,i.description,i.staffName,i.staffEmail,i.status,i.createdAt,i.claimedBy,i.claimedId,i.claimedContact,i.claimedAt,i.returnedAt||''].map(v=>`"${String(v||'').replace(/"/g,'""')}"`));
-  const csv=[h,...rows].map(r=>r.join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
-  a.download=`eps-retriever-${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  toast('CSV exported','ok');
-}
 
 // ─── SETTINGS MODAL ─────────────────────────────────
 function openSettings() {
   if(currentRole!=='admin') return;
-  document.getElementById('sheetUrlInput').value=settings.sheetUrl||'';
   document.getElementById('pwdStudent').value=settings.pwdStudent||'';
   document.getElementById('pwdFacilities').value=settings.pwdFacilities||'';
   document.getElementById('pwdAdmin').value=settings.pwdAdmin||'';
-  document.getElementById('testSheetBtn').disabled = !settings.sheetUrl;
   openModal('settingsOverlay');
 }
 function updateSheetPill() {
   const pill=document.getElementById('sheetPill');
   const txt=document.getElementById('sheetPillText');
-  if(settings.sheetUrl){pill.classList.add('connected');txt.textContent='Sheet Connected';}
-  else{pill.classList.remove('connected');txt.textContent='No Sheet';}
+  pill.classList.add('connected');
+  txt.textContent='Sheet Connected';
 }
 
 // ─── MODALS ─────────────────────────────────────────
