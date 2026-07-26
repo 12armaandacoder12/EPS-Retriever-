@@ -1,6 +1,5 @@
 // ─── CONSTANTS ─────────────────────────────────────
-const SHEET_URL    = 'https://script.google.com/macros/s/AKfycbxDMGueHtWg13r2dhE_KeYL9v9O71UbqUmFWvj9bXP7J2V-GCt3ZNkyJD_DBQOtI-XZ/exec';
-const STORE_KEY    = 'eps_items_v5';
+const SHEET_URL    = 'https://script.google.com/macros/s/AKfycbx6HeRpJgjWivNgYt_wbrzeLYK1eK2Z_F9Nt0pNVxirbdvubTFyxiZTg4UJxsaMCgRd/exec';
 const SETTINGS_KEY = 'eps_cfg_v5';
 const ADMIN_EMAIL  = 'amotwani@eastsideprep.org';
 
@@ -9,8 +8,13 @@ let items = [], settings = {};
 let currentRole = null, currentEmail = null;
 let browseFilter = 'all', dashFilter = 'all';
 let claimingId = null, photoData = null;
+let itemsLoading = false;
 
 // ─── SETTINGS ──────────────────────────────────────
+// NOTE: Access codes/passwords are the only thing still kept in
+// localStorage — they're admin-configurable login gates, not
+// item data, so they aren't part of the "load from the sheet"
+// requirement. Everything about items now lives in the Sheet.
 function loadSettings() {
   try { settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}'); } catch(e){settings={};}
   settings.pwdStudent    = settings.pwdStudent    || 'EPSeagles';
@@ -27,12 +31,43 @@ function savePwd(role) {
   toast('Access code updated','ok');
 }
 
-// ─── DATA ───────────────────────────────────────────
-function loadData() {
-  try { items = JSON.parse(localStorage.getItem(STORE_KEY)||'[]'); } catch(e){items=[];}
-}
-function persistData() { localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+// ─── DATA (Sheet-backed — no localStorage) ──────────
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+// Derives a display name from a login email since the login
+// screen only collects an email, never a full name.
+// "k.johnson@eastsideprep.org" -> "K Johnson"
+function nameFromEmail(email) {
+  if (!email) return 'Unknown';
+  const local = email.split('@')[0];
+  return local
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(' ') || local;
+}
+
+async function fetchItems() {
+  itemsLoading = true;
+  renderBrowse();
+  if (document.getElementById('view-dashboard')?.classList.contains('active')) renderDashboard();
+  try {
+    const res = await fetch(SHEET_URL + '?action=getItems', { method: 'GET' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    items = Array.isArray(data) ? data : [];
+    updateSheetPill(true);
+  } catch (err) {
+    console.warn('[EPS Retriever] Failed to load items from sheet:', err);
+    items = [];
+    updateSheetPill(false);
+    toast('Could not load items from the Sheet. Check your connection or Sheet URL.', 'err');
+  } finally {
+    itemsLoading = false;
+    renderBrowse();
+    if (document.getElementById('view-dashboard')?.classList.contains('active')) renderDashboard();
+  }
+}
 
 // ─── LOGIN ──────────────────────────────────────────
 let selectedRole = 'student';
@@ -84,7 +119,7 @@ function launchApp(role, email) {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').style.display='block';
   applyRoleUI(); renderBrowse();
-  const name = email.split('@')[0];
+  const name = nameFromEmail(email);
   toast('Welcome, '+name+'!','ok');
 }
 
@@ -130,8 +165,9 @@ function switchView(name) {
   document.getElementById('view-'+name).classList.add('active');
   const btn=document.querySelector(`.nav-btn[data-view="${name}"]`);
   if(btn) btn.classList.add('active');
-  if(name==='browse')    renderBrowse();
-  if(name==='dashboard') renderDashboard();
+  // Always pull the latest state from the Sheet when entering
+  // Browse or Dashboard, so everyone sees live data.
+  if(name==='browse' || name==='dashboard') fetchItems();
 }
 
 // ─── BROWSE ─────────────────────────────────────────
@@ -144,6 +180,11 @@ function setFilter(f,el) {
 function renderBrowse() {
   const q=(document.getElementById('searchInput')?.value||'').toLowerCase().trim();
   const grid=document.getElementById('itemsGrid');
+  if (itemsLoading) {
+    document.getElementById('browse-meta').textContent = 'Loading items from the Sheet…';
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><h3>Loading…</h3><p>Pulling the latest items from the Sheet.</p></div>`;
+    return;
+  }
   let list=items.filter(item=>{
     const mf=browseFilter==='all'||item.status===browseFilter||item.category===browseFilter;
     const mq=!q||[item.name,item.description,item.category,item.locationFound].join(' ').toLowerCase().includes(q);
@@ -208,7 +249,7 @@ function confirmClaim() {
   item.claimedId=document.getElementById('claimStudentId').value.trim();
   item.claimedContact=document.getElementById('claimContact').value.trim();
   item.claimedAt=new Date().toISOString();
-  persistData(); logToSheet('CLAIM',item);
+  logToSheet('CLAIM',item);
   closeModal('claimOverlay'); renderBrowse();
   toast(`Item claimed by ${name}`,'ok');
 }
@@ -237,7 +278,10 @@ function handlePhoto(input) {
   reader.onload = e => {
     const img = new Image();
     img.onload = () => {
-      const MAX = 1200;
+      // Kept intentionally small — the photo is stored as a base64
+      // string directly in a Google Sheets cell, which has roughly
+      // a 50,000-character limit per cell.
+      const MAX = 500;
       let w = img.width, h = img.height;
       if (w > MAX || h > MAX) {
         const r = Math.min(MAX/w, MAX/h);
@@ -246,7 +290,7 @@ function handlePhoto(input) {
       const cv = document.createElement('canvas');
       cv.width = w; cv.height = h;
       cv.getContext('2d').drawImage(img, 0, 0, w, h);
-      photoData = cv.toDataURL('image/jpeg', 0.82);
+      photoData = cv.toDataURL('image/jpeg', 0.6);
       document.getElementById('previewImg').src = photoData;
       document.getElementById('previewImg').style.display = 'block';
       document.getElementById('photoActions').style.display = 'none';
@@ -300,10 +344,10 @@ function submitItem() {
     photo:        photoData,
     status:       'unclaimed',
     createdAt:    new Date().toISOString(),
-    claimedBy:'', claimedId:'', claimedContact:'', claimedAt:'', returnedAt:''
+    claimedBy:'', claimedId:'', claimedContact:'', claimedAt:'',
+    returnedAt:'', returnedBy:'', returnedByEmail:''
   };
   items.unshift(item);
-  persistData();
   logToSheet('UPLOAD', item);
   ['itemName','locationFound','description','staffName','staffEmail'].forEach(id => {
     document.getElementById(id).value = '';
@@ -322,6 +366,12 @@ function setDashFilter(f,el) {
 }
 
 function renderDashboard() {
+  if (itemsLoading) {
+    document.getElementById('statsStrip').innerHTML = '';
+    document.getElementById('dashTable').innerHTML =
+      `<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--ink-muted)">Loading items from the Sheet…</td></tr>`;
+    return;
+  }
   const total=items.length;
   const unc=items.filter(i=>i.status==='unclaimed').length;
   const cl=items.filter(i=>i.status==='claimed').length;
@@ -359,16 +409,24 @@ function renderDashboard() {
 
 function markReturned(id) {
   const item=items.find(i=>i.id===id); if(!item) return;
-  item.status='returned'; item.returnedAt=new Date().toISOString();
-  persistData(); logToSheet('RETURNED',item); renderDashboard();
+  item.status='returned';
+  item.returnedAt=new Date().toISOString();
+  // Pull from the logged-in account, not a manual field, so the
+  // Sheet always records who actually marked it returned.
+  item.returnedBy=nameFromEmail(currentEmail);
+  item.returnedByEmail=currentEmail||'';
+  logToSheet('RETURNED',item);
+  renderDashboard();
   toast('Marked as returned','ok');
 }
 
 function deleteItem(id) {
   if(currentRole!=='admin'){toast('Only admins can delete items','err');return;}
   if(!confirm('Permanently delete this item?')) return;
+  const item=items.find(i=>i.id===id);
   items=items.filter(i=>i.id!==id);
-  persistData(); renderDashboard();
+  if(item) logToSheet('DELETE', item);
+  renderDashboard();
   toast('Item deleted','info');
 }
 
@@ -391,6 +449,7 @@ function openDetailModal(id) {
         <div><strong>Contact:</strong> ${esc(item.claimedContact||'—')}</div>
         <div><strong>Claimed at:</strong> ${fmtDateTime(item.claimedAt)}</div>
         ${item.returnedAt?`<div><strong>Returned at:</strong> ${fmtDateTime(item.returnedAt)}</div>`:''}
+        ${item.returnedBy?`<div><strong>Returned by:</strong> ${esc(item.returnedBy)} (${esc(item.returnedByEmail||'—')})</div>`:''}
       </div>`;
   }
   document.getElementById('detailClaimSection').innerHTML=claimHtml;
@@ -398,30 +457,33 @@ function openDetailModal(id) {
 }
 
 // ─── SHEETS ─────────────────────────────────────────
-// Opens the Apps Script URL with query params in a hidden
-// window — bypasses every CORS/redirect issue completely.
+// Submits via a hidden iframe + POST form — sidesteps CORS entirely
+// and (since it's a POST body, not a query string) has no practical
+// length limit, which is what lets the base64 photo ride along.
 
 function logToSheet(eventType, item) {
 
   const data = {
-    event:          eventType,
-    timestamp:      new Date().toISOString(),
-    id:             item.id             || '',
-    name:           item.name           || '',
-    category:       item.category       || '',
-    location:       item.locationFound  || '',
-    description:    item.description    || '',
-    staffName:      item.staffName      || '',
-    staffEmail:     item.staffEmail     || '',
-    status:         item.status         || '',
-    claimedBy:      item.claimedBy      || '',
-    claimedId:      item.claimedId      || '',
-    claimedContact: item.claimedContact || '',
-    claimedAt:      item.claimedAt      || '',
-    returnedAt:     item.returnedAt     || ''
+    event:            eventType,
+    timestamp:        new Date().toISOString(),
+    id:               item.id             || '',
+    name:             item.name           || '',
+    category:         item.category       || '',
+    location:         item.locationFound  || '',
+    description:      item.description    || '',
+    staffName:        item.staffName      || '',
+    staffEmail:       item.staffEmail     || '',
+    status:           item.status         || '',
+    claimedBy:        item.claimedBy      || '',
+    claimedId:        item.claimedId      || '',
+    claimedContact:   item.claimedContact || '',
+    claimedAt:        item.claimedAt      || '',
+    returnedAt:       item.returnedAt     || '',
+    returnedBy:       item.returnedBy       || '',
+    returnedByEmail:  item.returnedByEmail  || '',
+    photo:            item.photo            || ''
   };
 
-  // Method 1: hidden iframe form submit (silent, background)
   try {
     const iframeName = 'eps_' + Date.now();
     const iframe = document.createElement('iframe');
@@ -430,7 +492,7 @@ function logToSheet(eventType, item) {
     document.body.appendChild(iframe);
 
     const form = document.createElement('form');
-    form.method = 'GET';
+    form.method = 'POST';
     form.action = SHEET_URL;
     form.target = iframeName;
     form.style.display = 'none';
@@ -463,9 +525,14 @@ function openSettings() {
   document.getElementById('pwdAdmin').value=settings.pwdAdmin||'';
   openModal('settingsOverlay');
 }
-function updateSheetPill() {
+function updateSheetPill(connected) {
   const pill=document.getElementById('sheetPill');
   const txt=document.getElementById('sheetPillText');
+  if (connected === false) {
+    pill.classList.remove('connected');
+    txt.textContent = 'Sheet Error';
+    return;
+  }
   pill.classList.add('connected');
   txt.textContent='Sheet Connected';
 }
@@ -493,33 +560,9 @@ function fmtDateTime(iso){if(!iso)return'—';return new Date(iso).toLocaleStrin
 function statusText(s){return{unclaimed:'Unclaimed',claimed:'Claimed',returned:'Returned'}[s]||s;}
 function catEmoji(c){const m={Electronics:'📱',Clothing:'👕',Accessories:'👜','School Supplies':'📚','Water Bottle':'🍶',Keys:'🔑','Sports Equipment':'⚽',Books:'📖',Instrument:'🎸',Other:'📦'};return m[c]||'📦';}
 
-// ─── DEMO SEED ───────────────────────────────────────
-function seedDemo() {
-  if(items.length>0) return;
-  [{name:'Blue Hydro Flask 40 oz',category:'Water Bottle',location:'Gym',desc:'Large blue Hydro Flask with stickers, no lid.'},
-   {name:'AirPods Pro Case',category:'Electronics',location:'Library',desc:'White AirPods Pro case. No earbuds inside.'},
-   {name:'Black Nike Hoodie',category:'Clothing',location:'Cafeteria',desc:'Black full-zip Nike hoodie, size Large.'},
-   {name:'TI-84 Plus Calculator',category:'School Supplies',location:'Room 204',desc:'Silver graphing calculator, "MS" on back.'},
-   {name:'Purple Scrunchie',category:'Accessories',location:'Gym',desc:'Purple velvet scrunchie.'},
-   {name:'Toyota Car Keys',category:'Keys',location:'Main Office',desc:'Toyota key fob with a small red lanyard.'}
-  ].forEach((d,i)=>{
-    items.push({
-      id:uid(),name:d.name,category:d.category,locationFound:d.location,
-      description:d.desc,staffName:i%2===0?'Ms. Johnson':'Mr. Davis',
-      staffEmail:i%2===0?'kjohnson@eastsideprep.org':'tdavis@eastsideprep.org',
-      photo:null,status:i===1?'claimed':'unclaimed',
-      createdAt:new Date(Date.now()-i*172800000).toISOString(),
-      claimedBy:i===1?'Alex Rodriguez':'',claimedId:i===1?'S-20891':'',
-      claimedContact:i===1?'arodriguez@eastsideprep.org':'',
-      claimedAt:i===1?new Date(Date.now()-86400000).toISOString():'',returnedAt:''
-    });
-  });
-  persistData();
-}
-
 // ─── INIT ────────────────────────────────────────────
-loadSettings();
-loadData();
-seedDemo();
-updateSheetPill();
-restoreSession();
+(async function init() {
+  loadSettings();
+  await fetchItems();
+  restoreSession();
+})();
