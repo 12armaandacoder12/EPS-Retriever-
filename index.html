@@ -5,6 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EPS Retriever — Lost & Found</title>
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/favicon-180.png">
+<link rel="shortcut icon" href="images/favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles/index.css">
 </head>
@@ -15,21 +19,7 @@
   <div class="login-card">
     <div class="login-top">
       <div class="login-eagle">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" width="54" height="54">
-          <path d="M26 3 L47 10 L47 30 Q47 44 26 50 Q5 44 5 30 L5 10 Z" fill="#eba700"/>
-          <path d="M26 6.5 L44 12.5 L44 30 Q44 42 26 47 Q8 42 8 30 L8 12.5 Z" fill="#1C3461"/>
-          <path d="M23 27 L6 17 L10 23 L5 22.5 L9 27.5 L5.5 28 L10 32 L16.5 30 Z" fill="white"/>
-          <path d="M29 27 L46 17 L42 23 L47 22.5 L43 27.5 L46.5 28 L42 32 L35.5 30 Z" fill="white"/>
-          <path d="M20 31 Q18 38 20 43 L26 45.5 L32 43 Q34 38 32 31 Z" fill="white"/>
-          <ellipse cx="26" cy="30" rx="6.5" ry="5.5" fill="white"/>
-          <path d="M22 23 Q22 19 26 19 Q30 19 30 23 L29.5 28 L22.5 28 Z" fill="white"/>
-          <ellipse cx="26.5" cy="15" rx="5.5" ry="5.5" fill="white"/>
-          <path d="M30.5 13.5 L38 15.5 L32 18 Z" fill="#eba700"/>
-          <path d="M31.5 17.5 L37 19 L32 19.5 Z" fill="#c98f00"/>
-          <circle cx="28.5" cy="12.5" r="2" fill="#1C3461"/>
-          <circle cx="29" cy="12" r="0.75" fill="white"/>
-          <path d="M21 43 L19 49 L22.5 47 L26 49 L29.5 47 L33 49 L31 43 Z" fill="white"/>
-        </svg>
+        <img src="images/2268.jpg" alt="Eastside Preparatory School Eagle">
       </div>
       <div class="login-title">EPS Retriever</div>
       <div class="login-sub">Eastside Preparatory School · Lost &amp; Found</div>
@@ -72,21 +62,7 @@
     <div class="header-inner">
       <div class="logo" onclick="switchView('browse')">
         <div class="logo-mark">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" width="40" height="40">
-            <path d="M26 3 L47 10 L47 30 Q47 44 26 50 Q5 44 5 30 L5 10 Z" fill="#eba700"/>
-            <path d="M26 6.5 L44 12.5 L44 30 Q44 42 26 47 Q8 42 8 30 L8 12.5 Z" fill="#1C3461"/>
-            <path d="M23 27 L6 17 L10 23 L5 22.5 L9 27.5 L5.5 28 L10 32 L16.5 30 Z" fill="white"/>
-            <path d="M29 27 L46 17 L42 23 L47 22.5 L43 27.5 L46.5 28 L42 32 L35.5 30 Z" fill="white"/>
-            <path d="M20 31 Q18 38 20 43 L26 45.5 L32 43 Q34 38 32 31 Z" fill="white"/>
-            <ellipse cx="26" cy="30" rx="6.5" ry="5.5" fill="white"/>
-            <path d="M22 23 Q22 19 26 19 Q30 19 30 23 L29.5 28 L22.5 28 Z" fill="white"/>
-            <ellipse cx="26.5" cy="15" rx="5.5" ry="5.5" fill="white"/>
-            <path d="M30.5 13.5 L38 15.5 L32 18 Z" fill="#eba700"/>
-            <path d="M31.5 17.5 L37 19 L32 19.5 Z" fill="#c98f00"/>
-            <circle cx="28.5" cy="12.5" r="2" fill="#1C3461"/>
-            <circle cx="29" cy="12" r="0.75" fill="white"/>
-            <path d="M21 43 L19 49 L22.5 47 L26 49 L29.5 47 L33 49 L31 43 Z" fill="white"/>
-          </svg>
+          <img src="images/2268.jpg" alt="Eastside Preparatory School Eagle">
         </div>
         <div class="logo-label">
           <span class="logo-name">EPS Retriever</span>
@@ -95,13 +71,12 @@
       </div>
       <nav>
         <button class="nav-btn active" data-view="browse" onclick="switchView('browse')"><span class="ni">◈</span><span class="nt">Browse</span></button>
-        <button class="nav-btn" data-view="upload" id="navUpload" onclick="switchView('upload')" style="display:none;"><span class="ni">＋</span><span class="nt">Report Found Item</span></button>
         <button class="nav-btn" data-view="dashboard" onclick="switchView('dashboard')"><span class="ni">≡</span><span class="nt">Dashboard</span></button>
+        <button class="nav-btn" data-view="upload" id="navUpload" onclick="switchView('upload')" style="display:none;"><span class="ni">＋</span><span class="nt">Report Found Item</span></button>
       </nav>
       <div class="header-right">
         <div class="role-badge" id="roleBadge"></div>
-        <div class="sheet-pill" id="sheetPill"><span class="sheet-pill-dot"></span><span id="sheetPillText">No Sheet</span></div>
-        <button class="icon-btn" id="settingsBtn" onclick="openSettings()" title="Settings" style="display:none;">⚙</button>
+        <div class="sheet-pill" id="sheetPill" style="display:none;"><span class="sheet-pill-dot"></span><span id="sheetPillText">No Sheet</span></div>
         <button class="logout-btn" onclick="doLogout()">Sign Out</button>
       </div>
     </div>
@@ -118,14 +93,21 @@
         </div>
       </div>
       <div class="toolbar">
-        <button class="chip active" onclick="setFilter('all',this)">All Items</button>
-        <button class="chip" onclick="setFilter('unclaimed',this)">Unclaimed</button>
-        <button class="chip" onclick="setFilter('claimed',this)">Claimed</button>
-        <button class="chip" onclick="setFilter('Electronics',this)">Electronics</button>
-        <button class="chip" onclick="setFilter('Clothing',this)">Clothing</button>
-        <button class="chip" onclick="setFilter('Accessories',this)">Accessories</button>
-        <button class="chip" onclick="setFilter('School Supplies',this)">School Supplies</button>
-        <button class="chip" onclick="setFilter('Water Bottle',this)">Water Bottles</button>
+        <button class="chip active" onclick="setSection('available',this)">Available Items</button>
+        <button class="chip" onclick="setSection('claimed',this)">Claimed Items</button>
+        <select id="categoryFilter" class="filter-select" onchange="renderBrowse()">
+          <option value="all">All Categories</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Clothing">Clothing</option>
+          <option value="Accessories">Accessories</option>
+          <option value="School Supplies">School Supplies</option>
+          <option value="Water Bottle">Water Bottles</option>
+          <option value="Keys">Keys</option>
+          <option value="Sports Equipment">Sports Equipment</option>
+          <option value="Books">Books</option>
+          <option value="Instrument">Instrument</option>
+          <option value="Other">Other</option>
+        </select>
         <div class="search-wrap">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l3 3"/></svg>
           <input type="text" class="search-input" id="searchInput" placeholder="Search items…" oninput="renderBrowse()">
@@ -280,33 +262,20 @@
   </div>
 </div>
 
-<!-- SETTINGS MODAL -->
-<div class="overlay" id="settingsOverlay">
-  <div class="modal wide">
-    <div class="modal-head" style="padding:20px 24px">
-      <button class="modal-x" onclick="closeModal('settingsOverlay')">✕</button>
-      <h2 class="modal-title">Settings</h2>
-      <div class="m-badges"><span class="mbadge">Admin Only</span></div>
-    </div>
-    <div class="modal-body">
-      <div class="pwd-box">
-        <div class="pwd-box-title">Access Codes &amp; Passwords</div>
-        <div class="pwd-row">
-          <div class="field" style="margin-bottom:0"><label>Student Access Code</label><input type="text" id="pwdStudent" placeholder="e.g. EPSeagles"></div>
-          <button class="btn" style="padding:9px 14px;font-size:13px;align-self:flex-end" onclick="savePwd('student')">Save</button>
-        </div>
-        <div style="height:12px"></div>
-        <div class="pwd-row">
-          <div class="field" style="margin-bottom:0"><label>Facilities Access Code</label><input type="text" id="pwdFacilities" placeholder="e.g. EPSfacilities"></div>
-          <button class="btn" style="padding:9px 14px;font-size:13px;align-self:flex-end" onclick="savePwd('facilities')">Save</button>
-        </div>
-        <div style="height:12px"></div>
-        <div class="pwd-row">
-          <div class="field" style="margin-bottom:0"><label>Admin Password</label><input type="text" id="pwdAdmin" placeholder="Admin password"></div>
-          <button class="btn" style="padding:9px 14px;font-size:13px;align-self:flex-end" onclick="savePwd('admin')">Save</button>
-        </div>
-      </div>
-    </div>
+<!-- CAMERA OVERLAY (live capture, iPhone-Camera-style) -->
+<div class="camera-overlay" id="cameraOverlay">
+  <div class="camera-top">
+    <button class="camera-close" onclick="closeCamera()" title="Cancel">✕</button>
+    <div class="camera-hint">Align the item in frame</div>
+    <button class="camera-flip" id="cameraFlipBtn" onclick="flipCamera()" title="Switch camera" style="display:none;">⟳</button>
+  </div>
+  <div class="camera-viewport">
+    <video id="cameraVideo" autoplay playsinline muted></video>
+  </div>
+  <div class="camera-bottom">
+    <button class="camera-shutter" id="cameraShutterBtn" onclick="capturePhoto()" title="Take photo">
+      <span class="shutter-ring"></span>
+    </button>
   </div>
 </div>
 

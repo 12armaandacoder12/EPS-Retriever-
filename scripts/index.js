@@ -1,37 +1,23 @@
 // ─── CONSTANTS ─────────────────────────────────────
-const SHEET_URL    = 'https://script.google.com/macros/s/AKfycbx6HeRpJgjWivNgYt_wbrzeLYK1eK2Z_F9Nt0pNVxirbdvubTFyxiZTg4UJxsaMCgRd/exec';
-const SETTINGS_KEY = 'eps_cfg_v5';
-const ADMIN_EMAIL  = 'amotwani@eastsideprep.org';
+const SHEET_URL       = 'https://script.google.com/macros/s/AKfycbx6HeRpJgjWivNgYt_wbrzeLYK1eK2Z_F9Nt0pNVxirbdvubTFyxiZTg4UJxsaMCgRd/exec';
+const ADMIN_EMAIL     = 'amotwani@eastsideprep.org';
+
+// Login access codes are fixed in code (not editable in-app, not
+// stored anywhere locally) — see requirement to remove the
+// password-change settings.
+const PWD_STUDENT     = 'EPSeagles';
+const PWD_FACILITIES  = 'EPSfacilities';
+const PWD_ADMIN       = 'EPSadmin2024';
 
 // ─── STATE ─────────────────────────────────────────
-let items = [], settings = {};
+let items = [];
 let currentRole = null, currentEmail = null;
-let browseFilter = 'all', dashFilter = 'all';
+let browseSection = 'available'; // 'available' (unclaimed) | 'claimed'
+let dashFilter = 'all';
 let claimingId = null, photoData = null;
 let itemsLoading = false;
 
-// ─── SETTINGS ──────────────────────────────────────
-// NOTE: Access codes/passwords are the only thing still kept in
-// localStorage — they're admin-configurable login gates, not
-// item data, so they aren't part of the "load from the sheet"
-// requirement. Everything about items now lives in the Sheet.
-function loadSettings() {
-  try { settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}'); } catch(e){settings={};}
-  settings.pwdStudent    = settings.pwdStudent    || 'EPSeagles';
-  settings.pwdFacilities = settings.pwdFacilities || 'EPSfacilities';
-  settings.pwdAdmin      = settings.pwdAdmin      || 'EPSadmin2024';
-}
-function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
-
-function savePwd(role) {
-  const key = 'pwd' + role[0].toUpperCase() + role.slice(1);
-  const val = document.getElementById(key).value.trim();
-  if (!val) { toast('Code cannot be empty','err'); return; }
-  settings[key] = val; saveSettings();
-  toast('Access code updated','ok');
-}
-
-// ─── DATA (Sheet-backed — no localStorage) ──────────
+// ─── DATA (Sheet-backed — nothing stored locally) ───
 function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
 // Derives a display name from a login email since the login
@@ -95,19 +81,19 @@ function doLogin(role) {
     const email = document.getElementById('s-email').value.trim().toLowerCase();
     const pass  = document.getElementById('s-pass').value;
     if (!email.endsWith('@eastsideprep.org')) { showErr('student','Must use an @eastsideprep.org email.'); return; }
-    if (pass !== settings.pwdStudent) { showErr('student','Incorrect access code.'); return; }
+    if (pass !== PWD_STUDENT) { showErr('student','Incorrect access code.'); return; }
     launchApp('student', email);
   } else if (role==='facilities') {
     const email = document.getElementById('f-email').value.trim().toLowerCase();
     const pass  = document.getElementById('f-pass').value;
     if (!email.endsWith('@eastsideprep.org')) { showErr('facilities','Must use an @eastsideprep.org email.'); return; }
-    if (pass !== settings.pwdFacilities) { showErr('facilities','Incorrect access code.'); return; }
+    if (pass !== PWD_FACILITIES) { showErr('facilities','Incorrect access code.'); return; }
     launchApp('facilities', email);
   } else if (role==='admin') {
     const email = document.getElementById('a-email').value.trim().toLowerCase();
     const pass  = document.getElementById('a-pass').value;
     if (email !== ADMIN_EMAIL) { showErr('admin','That email is not authorized for admin access.'); return; }
-    if (pass !== settings.pwdAdmin) { showErr('admin','Incorrect admin password.'); return; }
+    if (pass !== PWD_ADMIN) { showErr('admin','Incorrect admin password.'); return; }
     launchApp('admin', email);
   }
 }
@@ -131,8 +117,8 @@ function applyRoleUI() {
   // Upload tab: facilities + admin only
   document.getElementById('navUpload').style.display =
     (currentRole==='facilities'||currentRole==='admin') ? 'flex' : 'none';
-  // Settings gear: admin only
-  document.getElementById('settingsBtn').style.display =
+  // Sheet-connection pill: admin only
+  document.getElementById('sheetPill').style.display =
     currentRole==='admin' ? 'flex' : 'none';
 }
 
@@ -171,32 +157,39 @@ function switchView(name) {
 }
 
 // ─── BROWSE ─────────────────────────────────────────
-function setFilter(f,el) {
-  browseFilter=f;
+function setSection(sec, el) {
+  browseSection = sec;
   document.querySelectorAll('#view-browse .chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active'); renderBrowse();
+  el.classList.add('active');
+  renderBrowse();
 }
 
 function renderBrowse() {
   const q=(document.getElementById('searchInput')?.value||'').toLowerCase().trim();
+  const cat=document.getElementById('categoryFilter')?.value||'all';
   const grid=document.getElementById('itemsGrid');
+
   if (itemsLoading) {
     document.getElementById('browse-meta').textContent = 'Loading items from the Sheet…';
     grid.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><h3>Loading…</h3><p>Pulling the latest items from the Sheet.</p></div>`;
     return;
   }
+
+  // Browse only ever shows unclaimed ("Available") or claimed
+  // ("Claimed") items — returned items live in the Dashboard only.
+  const wantStatus = browseSection === 'available' ? 'unclaimed' : 'claimed';
+
   let list=items.filter(item=>{
-    const mf=browseFilter==='all'||item.status===browseFilter||item.category===browseFilter;
+    const ms = item.status===wantStatus;
+    const mc = cat==='all'||item.category===cat;
     const mq=!q||[item.name,item.description,item.category,item.locationFound].join(' ').toLowerCase().includes(q);
-    return mf&&mq;
-  }).sort((a,b)=>{
-    if(a.status==='unclaimed'&&b.status!=='unclaimed') return -1;
-    if(b.status==='unclaimed'&&a.status!=='unclaimed') return 1;
-    return new Date(b.createdAt)-new Date(a.createdAt);
-  });
-  const uncl=list.filter(i=>i.status==='unclaimed').length;
+    return ms&&mc&&mq;
+  }).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+
+  const label = browseSection==='available' ? 'unclaimed' : 'claimed';
   document.getElementById('browse-meta').textContent=
-    list.length===0?'No items match your filter':`${uncl} unclaimed · ${list.length} item${list.length!==1?'s':''} shown`;
+    list.length===0?'No items match your filter':`${list.length} ${label} item${list.length!==1?'s':''} shown`;
+
   if(list.length===0){
     grid.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><h3>Nothing here yet</h3><p>Try a different filter or check back later.</p></div>`;
     return;
@@ -254,19 +247,87 @@ function confirmClaim() {
   toast(`Item claimed by ${name}`,'ok');
 }
 
-// ─── UPLOAD ─────────────────────────────────────────
-// Single input — we set/remove 'capture' dynamically before triggering
+// ─── CAMERA (live capture, not a file-picker) ───────
+// Uses getUserMedia so "Take Photo" actually opens a live camera
+// viewfinder (works on both mobile and desktop-with-webcam),
+// instead of falling back to the OS file picker like a plain
+// <input capture> tag does on desktop browsers.
+let cameraStream = null;
+let cameraFacing = 'environment';
 
-function openCamera() {
-  const inp = document.getElementById('photoInput');
-  inp.setAttribute('capture', 'environment'); // rear camera
-  inp.value = '';
-  inp.click();
+async function openCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    toast('Camera not available on this device — use Upload Photo instead','err');
+    return;
+  }
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: cameraFacing } },
+      audio: false
+    });
+  } catch (err) {
+    console.warn('[EPS Retriever] Camera access failed:', err);
+    toast('Could not access the camera — check permissions or use Upload Photo','err');
+    return;
+  }
+  const video = document.getElementById('cameraVideo');
+  video.srcObject = cameraStream;
+  document.getElementById('cameraOverlay').classList.add('open');
+
+  // Only show the flip-camera control if there's more than one camera
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d => d.kind === 'videoinput');
+    document.getElementById('cameraFlipBtn').style.display = cams.length > 1 ? 'flex' : 'none';
+  } catch (e) {
+    document.getElementById('cameraFlipBtn').style.display = 'none';
+  }
 }
+
+function stopCameraStream() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+}
+
+function closeCamera() {
+  stopCameraStream();
+  document.getElementById('cameraOverlay').classList.remove('open');
+}
+
+async function flipCamera() {
+  cameraFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+  stopCameraStream();
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: cameraFacing } },
+      audio: false
+    });
+    document.getElementById('cameraVideo').srcObject = cameraStream;
+  } catch (err) {
+    toast('Could not switch camera','err');
+  }
+}
+
+function capturePhoto() {
+  const video = document.getElementById('cameraVideo');
+  if (!video.videoWidth) return;
+  const cv = document.createElement('canvas');
+  cv.width = video.videoWidth;
+  cv.height = video.videoHeight;
+  cv.getContext('2d').drawImage(video, 0, 0, cv.width, cv.height);
+  const raw = cv.toDataURL('image/jpeg', 0.92);
+  closeCamera();
+  setPhotoFromDataUrl(raw);
+}
+
+// ─── UPLOAD ─────────────────────────────────────────
+// Single file input for gallery picking (no more "capture" attr —
+// live camera capture is handled separately above)
 
 function openGallery() {
   const inp = document.getElementById('photoInput');
-  inp.removeAttribute('capture'); // file picker / gallery
   inp.value = '';
   inp.click();
 }
@@ -275,38 +336,42 @@ function handlePhoto(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      // Kept intentionally small — the photo is stored as a base64
-      // string directly in a Google Sheets cell, which has roughly
-      // a 50,000-character limit per cell.
-      const MAX = 500;
-      let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        const r = Math.min(MAX/w, MAX/h);
-        w = Math.round(w*r); h = Math.round(h*r);
-      }
-      const cv = document.createElement('canvas');
-      cv.width = w; cv.height = h;
-      cv.getContext('2d').drawImage(img, 0, 0, w, h);
-      photoData = cv.toDataURL('image/jpeg', 0.6);
-      document.getElementById('previewImg').src = photoData;
-      document.getElementById('previewImg').style.display = 'block';
-      document.getElementById('photoActions').style.display = 'none';
-      document.getElementById('dropZone').style.display = 'none';
-      document.getElementById('changePhotoBtn').style.display = 'inline-block';
-    };
-    img.src = e.target.result;
-  };
+  reader.onload = e => setPhotoFromDataUrl(e.target.result);
   reader.readAsDataURL(file);
+}
+
+// Shared resize/compress pipeline used by BOTH the gallery picker
+// and the live camera capture, so sizing/quality is always
+// consistent no matter where the photo came from.
+function setPhotoFromDataUrl(dataUrl) {
+  const img = new Image();
+  img.onload = () => {
+    // Kept intentionally small — the photo is stored as a base64
+    // string directly in a Google Sheets cell, which has roughly
+    // a 50,000-character limit per cell.
+    const MAX = 500;
+    let w = img.width, h = img.height;
+    if (w > MAX || h > MAX) {
+      const r = Math.min(MAX/w, MAX/h);
+      w = Math.round(w*r); h = Math.round(h*r);
+    }
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    photoData = cv.toDataURL('image/jpeg', 0.6);
+    document.getElementById('previewImg').src = photoData;
+    document.getElementById('previewImg').style.display = 'block';
+    document.getElementById('photoActions').style.display = 'none';
+    document.getElementById('dropZone').style.display = 'none';
+    document.getElementById('changePhotoBtn').style.display = 'inline-block';
+  };
+  img.src = dataUrl;
 }
 
 function resetPhoto() {
   photoData = null;
   const inp = document.getElementById('photoInput');
   inp.value = '';
-  inp.removeAttribute('capture');
   document.getElementById('previewImg').style.display = 'none';
   document.getElementById('previewImg').src = '';
   document.getElementById('photoActions').style.display = 'grid';
@@ -388,7 +453,8 @@ function renderDashboard() {
     tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--ink-muted)">No items to display</td></tr>`;
     return;
   }
-  const canDelete   = currentRole==='admin';
+  // Facilities and admin can both remove items; only claimed items can be marked returned.
+  const canDelete   = currentRole==='admin'||currentRole==='facilities';
   const canReturn   = currentRole==='facilities'||currentRole==='admin';
   tbody.innerHTML=list.map(item=>`
     <tr>
@@ -402,7 +468,7 @@ function renderDashboard() {
       <td><div class="act-cell">
         <button class="btn sm" onclick="openDetailModal('${item.id}')">View</button>
         ${canReturn&&item.status==='claimed'?`<button class="btn sm success" onclick="markReturned('${item.id}')">Mark Returned</button>`:''}
-        ${canDelete?`<button class="btn sm danger" onclick="deleteItem('${item.id}')">Delete</button>`:''}
+        ${canDelete?`<button class="btn sm danger" onclick="deleteItem('${item.id}')">Remove</button>`:''}
       </div></td>
     </tr>`).join('');
 }
@@ -421,13 +487,13 @@ function markReturned(id) {
 }
 
 function deleteItem(id) {
-  if(currentRole!=='admin'){toast('Only admins can delete items','err');return;}
-  if(!confirm('Permanently delete this item?')) return;
+  if(currentRole!=='admin' && currentRole!=='facilities'){toast('Only staff and admins can remove items','err');return;}
+  if(!confirm('Permanently remove this item?')) return;
   const item=items.find(i=>i.id===id);
   items=items.filter(i=>i.id!==id);
   if(item) logToSheet('DELETE', item);
   renderDashboard();
-  toast('Item deleted','info');
+  toast('Item removed','info');
 }
 
 function openDetailModal(id) {
@@ -515,16 +581,7 @@ function logToSheet(eventType, item) {
   }
 }
 
-
-
-// ─── SETTINGS MODAL ─────────────────────────────────
-function openSettings() {
-  if(currentRole!=='admin') return;
-  document.getElementById('pwdStudent').value=settings.pwdStudent||'';
-  document.getElementById('pwdFacilities').value=settings.pwdFacilities||'';
-  document.getElementById('pwdAdmin').value=settings.pwdAdmin||'';
-  openModal('settingsOverlay');
-}
+// ─── MODALS ─────────────────────────────────────────
 function updateSheetPill(connected) {
   const pill=document.getElementById('sheetPill');
   const txt=document.getElementById('sheetPillText');
@@ -537,11 +594,15 @@ function updateSheetPill(connected) {
   txt.textContent='Sheet Connected';
 }
 
-// ─── MODALS ─────────────────────────────────────────
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    if(document.getElementById('cameraOverlay').classList.contains('open')) closeCamera();
+  }
+});
 
 // ─── TOAST ──────────────────────────────────────────
 function toast(msg,type=''){
@@ -562,7 +623,6 @@ function catEmoji(c){const m={Electronics:'📱',Clothing:'👕',Accessories:'�
 
 // ─── INIT ────────────────────────────────────────────
 (async function init() {
-  loadSettings();
   await fetchItems();
   restoreSession();
 })();
