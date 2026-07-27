@@ -1,17 +1,13 @@
 // ─── CONSTANTS ─────────────────────────────────────
-const SHEET_URL       = 'https://script.google.com/macros/s/AKfycbx6HeRpJgjWivNgYt_wbrzeLYK1eK2Z_F9Nt0pNVxirbdvubTFyxiZTg4UJxsaMCgRd/exec';
-const ADMIN_EMAIL     = 'amotwani@eastsideprep.org';
+const SHEET_URL       = 'https://script.google.com/macros/s/AKfycbz6iRp0xK1JDZCWEp2ZUXHnwAdtpAE_pHpNFToXiYNYJZXtl72-fX9HpsIOItIi_1DI/exec';
 
-// Login access codes are fixed in code (not editable in-app, not
-// stored anywhere locally) — see requirement to remove the
-// password-change settings.
-const PWD_STUDENT     = 'EPSeagles';
-const PWD_FACILITIES  = 'EPSfacilities';
-const PWD_ADMIN       = 'EPSadmin2024';
+// Access codes are NOT here — they live only in the Apps Script,
+// which runs on Google's servers and never ships anything to the
+// browser. Login is verified server-side; see doLogin() below.
 
 // ─── STATE ─────────────────────────────────────────
 let items = [];
-let currentRole = null, currentEmail = null;
+let currentRole = null, currentEmail = null, currentToken = null;
 let browseSection = 'available'; // 'available' (unclaimed) | 'claimed'
 let dashFilter = 'all';
 let claimingId = null, photoData = null;
@@ -38,9 +34,14 @@ async function fetchItems() {
   renderBrowse();
   if (document.getElementById('view-dashboard')?.classList.contains('active')) renderDashboard();
   try {
-    const res = await fetch(SHEET_URL + '?action=getItems', { method: 'GET' });
+    const res = await fetch(SHEET_URL + '?action=getItems&token=' + encodeURIComponent(currentToken||''), { method: 'GET' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
+    if (data && data.error === 'unauthorized') {
+      toast('Your session expired — please sign in again.', 'err');
+      doLogout();
+      return;
+    }
     items = Array.isArray(data) ? data : [];
     updateSheetPill(true);
   } catch (err) {
@@ -75,36 +76,49 @@ function showErr(role, msg) {
   el.textContent = msg; el.classList.add('show');
 }
 
-function doLogin(role) {
+async function doLogin(role) {
   document.getElementById('err-'+role).classList.remove('show');
-  if (role==='student') {
-    const email = document.getElementById('s-email').value.trim().toLowerCase();
-    const pass  = document.getElementById('s-pass').value;
-    if (!email.endsWith('@eastsideprep.org')) { showErr('student','Must use an @eastsideprep.org email.'); return; }
-    if (pass !== PWD_STUDENT) { showErr('student','Incorrect access code.'); return; }
-    launchApp('student', email);
-  } else if (role==='facilities') {
-    const email = document.getElementById('f-email').value.trim().toLowerCase();
-    const pass  = document.getElementById('f-pass').value;
-    if (!email.endsWith('@eastsideprep.org')) { showErr('facilities','Must use an @eastsideprep.org email.'); return; }
-    if (pass !== PWD_FACILITIES) { showErr('facilities','Incorrect access code.'); return; }
-    launchApp('facilities', email);
-  } else if (role==='admin') {
-    const email = document.getElementById('a-email').value.trim().toLowerCase();
-    const pass  = document.getElementById('a-pass').value;
-    if (email !== ADMIN_EMAIL) { showErr('admin','That email is not authorized for admin access.'); return; }
-    if (pass !== PWD_ADMIN) { showErr('admin','Incorrect admin password.'); return; }
-    launchApp('admin', email);
+
+  let email, code;
+  if (role==='student')          { email=document.getElementById('s-email').value.trim().toLowerCase(); code=document.getElementById('s-pass').value; }
+  else if (role==='facilities')  { email=document.getElementById('f-email').value.trim().toLowerCase(); code=document.getElementById('f-pass').value; }
+  else                            { email=document.getElementById('a-email').value.trim().toLowerCase(); code=document.getElementById('a-pass').value; }
+
+  if (!email || !code) { showErr(role,'Please fill in both fields.'); return; }
+
+  const btn = document.querySelector(`#form-${role} .btn.full`);
+  const originalLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Signing in…';
+
+  try {
+    // The code is checked on the server (Apps Script) — it never
+    // lives in this file, so there's nothing for someone reading
+    // the page source to find.
+    const res = await fetch(SHEET_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids a CORS preflight
+      body: JSON.stringify({ action: 'login', role, email, code })
+    });
+    const data = await res.json();
+    if (!data.ok) { showErr(role, data.error || 'Sign-in failed.'); return; }
+    launchApp(data.role, data.email, data.token);
+  } catch (err) {
+    console.warn('[EPS Retriever] Login failed:', err);
+    showErr(role, 'Could not reach the server. Check your connection.');
+  } finally {
+    btn.disabled = false; btn.textContent = originalLabel;
   }
 }
 
-function launchApp(role, email) {
-  currentRole=role; currentEmail=email;
+function launchApp(role, email, token) {
+  currentRole=role; currentEmail=email; currentToken=token;
   sessionStorage.setItem('eps_role',role);
   sessionStorage.setItem('eps_email',email);
+  sessionStorage.setItem('eps_token',token);
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').style.display='block';
-  applyRoleUI(); renderBrowse();
+  applyRoleUI();
+  fetchItems(); // now that we have a valid token, actually load items
   const name = nameFromEmail(email);
   toast('Welcome, '+name+'!','ok');
 }
@@ -125,7 +139,8 @@ function applyRoleUI() {
 function doLogout() {
   sessionStorage.removeItem('eps_role');
   sessionStorage.removeItem('eps_email');
-  currentRole=null; currentEmail=null;
+  sessionStorage.removeItem('eps_token');
+  currentRole=null; currentEmail=null; currentToken=null;
   document.getElementById('appShell').style.display='none';
   document.getElementById('loginScreen').classList.remove('hidden');
   ['s-email','s-pass','f-email','f-pass','a-email','a-pass'].forEach(id=>{
@@ -140,7 +155,8 @@ function doLogout() {
 function restoreSession() {
   const role=sessionStorage.getItem('eps_role');
   const email=sessionStorage.getItem('eps_email');
-  if(role&&email) launchApp(role,email);
+  const token=sessionStorage.getItem('eps_token');
+  if(role&&email&&token) launchApp(role,email,token);
 }
 
 // ─── VIEWS ──────────────────────────────────────────
@@ -530,6 +546,7 @@ function openDetailModal(id) {
 function logToSheet(eventType, item) {
 
   const data = {
+    token:            currentToken        || '',
     event:            eventType,
     timestamp:        new Date().toISOString(),
     id:               item.id             || '',
@@ -622,7 +639,9 @@ function statusText(s){return{unclaimed:'Unclaimed',claimed:'Claimed',returned:'
 function catEmoji(c){const m={Electronics:'📱',Clothing:'👕',Accessories:'👜','School Supplies':'📚','Water Bottle':'🍶',Keys:'🔑','Sports Equipment':'⚽',Books:'📖',Instrument:'🎸',Other:'📦'};return m[c]||'📦';}
 
 // ─── INIT ────────────────────────────────────────────
-(async function init() {
-  await fetchItems();
+(function init() {
+  // fetchItems() requires a valid session token, so it's triggered
+  // by launchApp() (from a fresh login or a restored session) —
+  // not here, before anyone's authenticated.
   restoreSession();
 })();
