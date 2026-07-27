@@ -1,5 +1,5 @@
 // ─── CONSTANTS ─────────────────────────────────────
-const SHEET_URL       = 'https://script.google.com/macros/s/AKfycbz6iRp0xK1JDZCWEp2ZUXHnwAdtpAE_pHpNFToXiYNYJZXtl72-fX9HpsIOItIi_1DI/exec';
+const SHEET_URL       = 'https://script.google.com/macros/s/AKfycbxFiKP3oKAGVetwuSxAqq57ccibsT96NC7rq7ydaCYKscD84gI7s5lxyDJqwLEt6Wry/exec';
 
 // Access codes are NOT here — they live only in the Apps Script,
 // which runs on Google's servers and never ships anything to the

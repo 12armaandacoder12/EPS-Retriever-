@@ -33,21 +33,21 @@
       <div class="login-form active" id="form-student">
         <div class="login-hint">Use your <strong>@eastsideprep.org</strong> email and the student access code to browse and claim lost items.</div>
         <div class="login-error" id="err-student"></div>
-        <div class="field"><label>EPS Email</label><input type="email" id="s-email" placeholder="you@eastsideprep.org" onkeydown="if(event.key==='Enter')doLogin('student')"></div>
+        <div class="field"><label>EPS Email</label><input type="email" id="s-email" placeholder="Your school email" onkeydown="if(event.key==='Enter')doLogin('student')"></div>
         <div class="field"><label>Student Access Code</label><input type="password" id="s-pass" placeholder="Enter access code" onkeydown="if(event.key==='Enter')doLogin('student')"></div>
         <button class="btn full" onclick="doLogin('student')">Sign In as Student</button>
       </div>
       <div class="login-form" id="form-facilities">
         <div class="login-hint">Use your <strong>@eastsideprep.org</strong> facilities email and code to report and manage found items.</div>
         <div class="login-error" id="err-facilities"></div>
-        <div class="field"><label>EPS Email</label><input type="email" id="f-email" placeholder="you@eastsideprep.org" onkeydown="if(event.key==='Enter')doLogin('facilities')"></div>
+        <div class="field"><label>EPS Email</label><input type="email" id="f-email" placeholder="Your school email" onkeydown="if(event.key==='Enter')doLogin('facilities')"></div>
         <div class="field"><label>Facilities Access Code</label><input type="password" id="f-pass" placeholder="Enter access code" onkeydown="if(event.key==='Enter')doLogin('facilities')"></div>
         <button class="btn full" onclick="doLogin('facilities')">Sign In as Facilities</button>
       </div>
       <div class="login-form" id="form-admin">
         <div class="login-hint">Admin access is restricted to authorized personnel only.</div>
         <div class="login-error" id="err-admin"></div>
-        <div class="field"><label>Admin Email</label><input type="email" id="a-email" placeholder="amotwani@eastsideprep.org" onkeydown="if(event.key==='Enter')doLogin('admin')"></div>
+        <div class="field"><label>Admin Email</label><input type="email" id="a-email" placeholder="" onkeydown="if(event.key==='Enter')doLogin('admin')"></div>
         <div class="field"><label>Admin Password</label><input type="password" id="a-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin('admin')"></div>
         <button class="btn full" onclick="doLogin('admin')">Sign In as Admin</button>
       </div>
