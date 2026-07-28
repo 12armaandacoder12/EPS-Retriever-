@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,21 +33,39 @@
         <div class="login-hint">Use your <strong>@eastsideprep.org</strong> email and the student access code to browse and claim lost items.</div>
         <div class="login-error" id="err-student"></div>
         <div class="field"><label>EPS Email</label><input type="email" id="s-email" placeholder="Your school email" onkeydown="if(event.key==='Enter')doLogin('student')"></div>
-        <div class="field"><label>Student Access Code</label><input type="password" id="s-pass" placeholder="Enter access code" onkeydown="if(event.key==='Enter')doLogin('student')"></div>
+        <div class="field">
+          <label>Student Access Code</label>
+          <div class="password-input-wrap">
+            <input type="password" id="s-pass" placeholder="Enter access code" onkeydown="if(event.key==='Enter')doLogin('student')">
+            <button type="button" class="toggle-password" onclick="togglePassword('s-pass', this)" aria-label="Toggle password visibility">👁️</button>
+          </div>
+        </div>
         <button class="btn full" onclick="doLogin('student')">Sign In as Student</button>
       </div>
       <div class="login-form" id="form-facilities">
         <div class="login-hint">Use your <strong>@eastsideprep.org</strong> facilities email and code to report and manage found items.</div>
         <div class="login-error" id="err-facilities"></div>
         <div class="field"><label>EPS Email</label><input type="email" id="f-email" placeholder="Your school email" onkeydown="if(event.key==='Enter')doLogin('facilities')"></div>
-        <div class="field"><label>Facilities Access Code</label><input type="password" id="f-pass" placeholder="Enter access code" onkeydown="if(event.key==='Enter')doLogin('facilities')"></div>
+        <div class="field">
+          <label>Facilities Access Code</label>
+          <div class="password-input-wrap">
+            <input type="password" id="f-pass" placeholder="Enter access code" onkeydown="if(event.key==='Enter')doLogin('facilities')">
+            <button type="button" class="toggle-password" onclick="togglePassword('f-pass', this)" aria-label="Toggle password visibility">👁️</button>
+          </div>
+        </div>
         <button class="btn full" onclick="doLogin('facilities')">Sign In as Facilities</button>
       </div>
       <div class="login-form" id="form-admin">
         <div class="login-hint">Admin access is restricted to authorized personnel only.</div>
         <div class="login-error" id="err-admin"></div>
         <div class="field"><label>Admin Email</label><input type="email" id="a-email" placeholder="" onkeydown="if(event.key==='Enter')doLogin('admin')"></div>
-        <div class="field"><label>Admin Password</label><input type="password" id="a-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin('admin')"></div>
+        <div class="field">
+          <label>Admin Password</label>
+          <div class="password-input-wrap">
+            <input type="password" id="a-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin('admin')">
+            <button type="button" class="toggle-password" onclick="togglePassword('a-pass', this)" aria-label="Toggle password visibility">👁️</button>
+          </div>
+        </div>
         <button class="btn full" onclick="doLogin('admin')">Sign In as Admin</button>
       </div>
     </div>
@@ -82,7 +99,6 @@
     </div>
   </header>
   <main>
-
     <!-- BROWSE -->
     <div class="view active" id="view-browse">
       <div class="page-header">
@@ -129,14 +145,8 @@
         <div class="up-panel">
           <div class="up-head"><div class="up-head-title">Photo</div><div class="up-head-sub">Take a photo on-site or choose one from your device</div></div>
           <div class="up-body">
-
-            <!-- Single shared file input — capture attr is set dynamically -->
             <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(this)" style="display:none">
-
-            <!-- Preview -->
             <img id="previewImg" class="preview-img" alt="Preview">
-
-            <!-- Two action buttons -->
             <div id="photoActions">
               <button class="photo-action-btn camera" onclick="openCamera()">
                 <span class="pab-icon">📸</span>
@@ -149,14 +159,11 @@
                 <span class="pab-hint">From your device</span>
               </button>
             </div>
-
-            <!-- Drag & drop (desktop) -->
             <div class="drop-zone" id="dropZone">
               <div class="drop-icon">⬆</div>
               <div class="drop-title">Or drag &amp; drop here</div>
               <div class="drop-hint">JPEG · PNG · WEBP</div>
             </div>
-
             <button class="change-photo-link" id="changePhotoBtn" onclick="resetPhoto()" style="display:none">✕ Remove photo</button>
           </div>
         </div>
@@ -216,7 +223,6 @@
         </table>
       </div>
     </div>
-
   </main>
 </div><!-- /appShell -->
 
@@ -237,7 +243,7 @@
       <div class="mform">
         <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="claimName" placeholder="Jane Smith"></div>
         <input type="hidden" id="claimStudentId" value="">
-        <div class="field"><label>EPS Email</label><input type="text" id="claimContact" placeholder="you@eastsideprep.org"></div>
+        <div class="field"><label>EPS Email <span class="req">*</span></label><input type="email" id="claimContact" placeholder="you@eastsideprep.org"></div>
         <button class="btn full" id="claimConfirmBtn" onclick="confirmClaim()" style="margin-top:4px">Confirm Claim</button>
       </div>
     </div>
@@ -262,7 +268,7 @@
   </div>
 </div>
 
-<!-- CAMERA OVERLAY (live capture, iPhone-Camera-style) -->
+<!-- CAMERA OVERLAY -->
 <div class="camera-overlay" id="cameraOverlay">
   <div class="camera-top">
     <button class="camera-close" onclick="closeCamera()" title="Cancel">✕</button>
@@ -280,7 +286,6 @@
 </div>
 
 <div id="toasts"></div>
-
 <script src="scripts/index.js"></script>
 </body>
 </html>
