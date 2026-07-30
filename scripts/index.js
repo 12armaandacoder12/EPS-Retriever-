@@ -245,7 +245,7 @@ function renderBrowse() {
   
   if (itemsLoading) {
     document.getElementById('browse-meta').textContent = 'Loading items…';
-    grid.innerHTML = `<div class="loading-block">${spinner('dark')}<p>Pulling the latest items from the Sheet…</p></div>`;
+    grid.innerHTML = `<div class="loading-block">${spinner('dark')}<p>Loading...</p></div>`;
     return;
   }
 
@@ -516,7 +516,7 @@ function setDashFilter(f, el) {
 function renderDashboard() {
   if (itemsLoading) {
     document.getElementById('statsStrip').innerHTML = '';
-    document.getElementById('dashTable').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--ink-muted)"><span class="btn-spinner-wrap">${spinner('dark')}Loading items from the Sheet…</span></td></tr>`;
+    document.getElementById('dashTable').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--ink-muted)"><span class="btn-spinner-wrap">${spinner('dark')}Loading…</span></td></tr>`;
     return;
   }
 

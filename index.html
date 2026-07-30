@@ -29,8 +29,7 @@
       <button class="role-tab" onclick="selectRole('admin',this)"><svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>Admin</button>
     </div>
     <div class="login-body">
-      <div class="login-form active" id="form-student">
-        <div class="login-hint">Use your <strong>@eastsideprep.org</strong> email and the student access code to browse and claim lost items.</div>
+      <div class="login-form active" id="form-student">        
         <div class="login-error" id="err-student"></div>
         <div class="field"><label>EPS Email</label><input type="email" id="s-email" placeholder="Your school email" onkeydown="if(event.key==='Enter')doLogin('student')"></div>
         <div class="field">
@@ -42,8 +41,7 @@
         </div>
         <button class="btn full" onclick="doLogin('student')">Sign In as Student</button>
       </div>
-      <div class="login-form" id="form-facilities">
-        <div class="login-hint">Use your <strong>@eastsideprep.org</strong> facilities email and code to report and manage found items.</div>
+      <div class="login-form" id="form-facilities">        
         <div class="login-error" id="err-facilities"></div>
         <div class="field"><label>EPS Email</label><input type="email" id="f-email" placeholder="Your school email" onkeydown="if(event.key==='Enter')doLogin('facilities')"></div>
         <div class="field">
@@ -56,7 +54,6 @@
         <button class="btn full" onclick="doLogin('facilities')">Sign In as Facilities</button>
       </div>
       <div class="login-form" id="form-admin">
-        <div class="login-hint">Admin access is restricted to authorized personnel only.</div>
         <div class="login-error" id="err-admin"></div>
         <div class="field"><label>Admin Email</label><input type="email" id="a-email" placeholder="" onkeydown="if(event.key==='Enter')doLogin('admin')"></div>
         <div class="field">
@@ -93,7 +90,7 @@
       </nav>
       <div class="header-right">
         <div class="role-badge" id="roleBadge"></div>
-        <div class="sheet-pill" id="sheetPill" style="display:none;"><span class="sheet-pill-dot"></span><span id="sheetPillText">No Sheet</span></div>
+        <div class="sheet-pill" id="sheetPill" style="display:none;"><span class="sheet-pill-dot" style="display:none"></span><span id="sheetPillText" style="display:none">No Sheet</span></div>
         <button class="logout-btn" onclick="doLogout()">Sign Out</button>
       </div>
     </div>
@@ -243,7 +240,7 @@
       <div class="mdiv"></div>
       <div class="msec">Claim This Item</div>
       <div class="mform">
-        <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="claimName" placeholder="Jane Smith"></div>
+        <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="claimName"></div>
         <input type="hidden" id="claimStudentId" value="">
         <div class="field"><label>EPS Email <span class="req">*</span></label><input type="email" id="claimContact" placeholder="you@eastsideprep.org"></div>
         <button class="btn full" id="claimConfirmBtn" onclick="confirmClaim()" style="margin-top:4px">Confirm Claim</button>
