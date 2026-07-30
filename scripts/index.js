@@ -1,6 +1,36 @@
 // ─── CONSTANTS ─────────────────────────────────────
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyfklqB9sdGAusJ3UJwn_FJjcCQ1R15marvQVhDC1lywkpcPF8CZ6cMixZyMVyg9Xef/exec';
 
+// ─── ICON LIBRARY (replaces all emoji glyphs) ──────
+const ICONS = {
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.8"/></svg>',
+  eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.2A9.8 9.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.4 4.3M6.6 6.6C4 8.3 2 12 2 12s3.6 7 10 7c1.4 0 2.7-.3 3.8-.8"/><path d="M9.9 10a3 3 0 0 0 4.1 4.1"/></svg>',
+  mapPin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11.5A7 7 0 0 0 5 9.5C5 14.7 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5.5 5.5L20 7"/></svg>',
+  checkCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>',
+  alertCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><circle cx="12" cy="16.3" r="0.9" fill="currentColor" stroke="none"/></svg>',
+  infoCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.7" r="0.9" fill="currentColor" stroke="none"/></svg>',
+  searchLg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.5-4.5"/></svg>',
+  inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16l3 9v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-6l3-9z"/><path d="M1 13h6l1.5 3h7L17 13h6"/></svg>',
+  smartphone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M11 18.5h2"/></svg>',
+  shirt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3l4 2 4-2 4 4-3 3v11H7V10L4 7l4-4z"/></svg>',
+  bag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5v-17z"/><path d="M4 4.5v17"/></svg>',
+  droplet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5S5 11 5 15.5a7 7 0 0 0 14 0C19 11 12 2.5 12 2.5z"/></svg>',
+  key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4.5"/><path d="M11.5 11.5L20 3M17 6l2 2M14 9l2 2"/></svg>',
+  ball: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21M6 6l3.2 3.2M18 6l-3.2 3.2M6 18l3.2-3.2M18 18l-3.2-3.2"/></svg>',
+  bookOpen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.6-4.6-2.2-8-2v14c3.4-.2 6 .4 8 2 2-1.6 4.6-2.2 8-2V4c-3.4-.2-6 .4-8 2z"/><path d="M12 6v14"/></svg>',
+  music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
+  package: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5v-9z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/></svg>',
+  student: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.6 3-6 7-6s7 2.4 7 6"/></svg>',
+  facilities: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2-2 2.6-2.6z"/></svg>',
+  admin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>'
+};
+const CAT_ICON = { Electronics: 'smartphone', Clothing: 'shirt', Accessories: 'bag', 'School Supplies': 'book', 'Water Bottle': 'droplet', Keys: 'key', 'Sports Equipment': 'ball', Books: 'bookOpen', Instrument: 'music', Other: 'package' };
+function icon(name, cls) { return `<span class="icon${cls ? ' ' + cls : ''}">${ICONS[name] || ICONS.package}</span>`; }
+function spinner(cls) { return `<span class="spinner${cls ? ' ' + cls : ''}"></span>`; }
+
 // ─── STATE ─────────────────────────────────────────
 let items = [];
 let currentRole = null, currentEmail = null, currentToken = null;
@@ -32,10 +62,10 @@ function togglePassword(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') {
     input.type = 'text';
-    btn.textContent = '🙈';
+    btn.innerHTML = ICONS.eyeOff;
   } else {
     input.type = 'password';
-    btn.textContent = '👁️';
+    btn.innerHTML = ICONS.eye;
   }
 }
 
@@ -99,7 +129,7 @@ async function doLogin(role) {
 
   const btn = document.querySelector(`#form-${role} .btn.full`);
   const originalLabel = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Signing in…';
+  btn.disabled = true; btn.innerHTML = `<span class="btn-spinner-wrap">${spinner()}Signing in…</span>`;
   
   try {
     const res = await fetch(SHEET_URL, {
@@ -138,7 +168,7 @@ function launchApp(role, email, token) {
 function applyRoleUI() {
   const badge = document.getElementById('roleBadge');
   const labels = { student: 'Student', facilities: 'Facilities', admin: 'Admin' };
-  badge.textContent = labels[currentRole] || '';
+  badge.innerHTML = icon(currentRole) + `<span class="rb-label">${labels[currentRole] || ''}</span>`;
   badge.className = 'role-badge ' + currentRole;
   document.getElementById('navUpload').style.display = (currentRole === 'facilities' || currentRole === 'admin') ? 'flex' : 'none';
   document.getElementById('sheetPill').style.display = currentRole === 'admin' ? 'flex' : 'none';
@@ -214,8 +244,8 @@ function renderBrowse() {
   const grid = document.getElementById('itemsGrid');
   
   if (itemsLoading) {
-    document.getElementById('browse-meta').textContent = 'Loading items from the Sheet…';
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><h3>Loading…</h3><p>Pulling the latest items from the Sheet.</p></div>`;
+    document.getElementById('browse-meta').textContent = 'Loading items…';
+    grid.innerHTML = `<div class="loading-block">${spinner('dark')}<p>Pulling the latest items from the Sheet…</p></div>`;
     return;
   }
 
@@ -231,27 +261,27 @@ function renderBrowse() {
   document.getElementById('browse-meta').textContent = list.length === 0 ? 'No items match your filter' : `${list.length} ${label} item${list.length !== 1 ? 's' : ''} shown`;
 
   if (list.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><h3>Nothing here yet</h3><p>Try a different filter or check back later.</p></div>`;
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${icon('searchLg')}</div><h3>Nothing here yet</h3><p>Try a different filter or check back later.</p></div>`;
     return;
   }
 
   grid.innerHTML = list.map(item => `
     <div class="item-card ${item.status}" onclick="openClaimModal('${item.id}')">
       <div class="card-photo">
-        ${item.photo ? `<img src="${item.photo}" alt="${esc(item.name)}" loading="lazy">` : `<div class="card-photo-placeholder">${catEmoji(item.category)}</div>`}
+        ${item.photo ? `<img src="${item.photo}" alt="${esc(item.name)}" loading="lazy">` : `<div class="card-photo-placeholder">${catIcon(item.category)}</div>`}
         <div class="card-photo-badge"><span class="status-badge badge-${item.status}">${statusText(item.status)}</span></div>
       </div>
       <div class="card-body">
         <div class="card-name">${esc(item.name)}</div>
         <div class="card-desc" style="flex:1">${item.description ? esc(item.description) : '<em style="opacity:.5">No description</em>'}</div>
         <div class="card-tags" style="margin-top:10px;margin-bottom:10px;">
-          <span class="tag tag-cat" style="min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:110px">${catEmoji(item.category)}${esc(item.category)}</span>
-          <span class="tag tag-loc" style="min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:90px">📍 ${esc(item.locationFound)}</span>
+          <span class="tag tag-cat" style="min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:110px">${catIcon(item.category)}${esc(item.category)}</span>
+          <span class="tag tag-loc" style="min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:90px">${icon('mapPin')} ${esc(item.locationFound)}</span>
           <span class="tag tag-date" style="flex-shrink:0">${fmtDate(item.createdAt)}</span>
         </div>
         <button class="claim-btn" ${item.status !== 'unclaimed' ? 'disabled' : ''}
           onclick="event.stopPropagation();${item.status === 'unclaimed' ? `openClaimModal('${item.id}')` : ''}"
-        >${item.status === 'unclaimed' ? 'Claim This Item →' : item.status === 'claimed' ? '✓ Already Claimed' : '✓ Returned to Owner'}</button>
+        >${item.status === 'unclaimed' ? 'Claim This Item →' : item.status === 'claimed' ? icon('check') + ' Already Claimed' : icon('check') + ' Returned to Owner'}</button>
       </div>
     </div>`).join('');
 }
@@ -260,12 +290,12 @@ function renderBrowse() {
 function openClaimModal(id) {
   const item = items.find(i => i.id === id); if (!item) return;
   claimingId = id;
-  document.getElementById('claimPhoto').innerHTML = item.photo ? `<img src="${item.photo}" alt="${esc(item.name)}">` : catEmoji(item.category);
+  document.getElementById('claimPhoto').innerHTML = item.photo ? `<img src="${item.photo}" alt="${esc(item.name)}">` : catIcon(item.category);
   document.getElementById('claimTitle').textContent = item.name;
   document.getElementById('claimBadges').innerHTML = `
-    <span class="mbadge">${catEmoji(item.category)}${esc(item.category)}</span>
-    <span class="mbadge">📍 ${esc(item.locationFound)}</span>
-    <span class="mbadge">🗓 ${fmtDate(item.createdAt)}</span>`;
+    <span class="mbadge">${catIcon(item.category)}${esc(item.category)}</span>
+    <span class="mbadge">${icon('mapPin')} ${esc(item.locationFound)}</span>
+    <span class="mbadge">${icon('calendar')} ${fmtDate(item.createdAt)}</span>`;
   document.getElementById('claimDesc').textContent = item.description || 'No additional description.';
   
   ['claimName', 'claimStudentId'].forEach(id => { document.getElementById(id).value = ''; });
@@ -276,7 +306,7 @@ function openClaimModal(id) {
 
   const btn = document.getElementById('claimConfirmBtn');
   if (item.status !== 'unclaimed') {
-    btn.textContent = item.status === 'claimed' ? '✓ Already Claimed' : '✓ Returned';
+    btn.innerHTML = item.status === 'claimed' ? icon('check') + ' Already Claimed' : icon('check') + ' Returned';
     btn.disabled = true; btn.style.opacity = '0.5';
   } else {
     btn.textContent = 'Confirm Claim';
@@ -486,7 +516,7 @@ function setDashFilter(f, el) {
 function renderDashboard() {
   if (itemsLoading) {
     document.getElementById('statsStrip').innerHTML = '';
-    document.getElementById('dashTable').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--ink-muted)">Loading items from the Sheet…</td></tr>`;
+    document.getElementById('dashTable').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--ink-muted)"><span class="btn-spinner-wrap">${spinner('dark')}Loading items from the Sheet…</span></td></tr>`;
     return;
   }
 
@@ -515,7 +545,7 @@ function renderDashboard() {
   
   tbody.innerHTML = list.map(item => `
     <tr>
-      <td>${item.photo ? `<img class="td-thumb" src="${item.photo}" alt="">` : `<div class="td-thumb-ph">${catEmoji(item.category)}</div>`}</td>
+      <td>${item.photo ? `<img class="td-thumb" src="${item.photo}" alt="">` : `<div class="td-thumb-ph">${catIcon(item.category)}</div>`}</td>
       <td class="td-name">${esc(item.name)}</td>
       <td class="hide-m"><span class="tag tag-cat">${esc(item.category)}</span></td>
       <td class="hide-m">${esc(item.locationFound)}</td>
@@ -553,12 +583,12 @@ function deleteItem(id) {
 
 function openDetailModal(id) {
   const item = items.find(i => i.id === id); if (!item) return;
-  document.getElementById('detailPhoto').innerHTML = item.photo ? `<img src="${item.photo}" alt="${esc(item.name)}">` : catEmoji(item.category);
+  document.getElementById('detailPhoto').innerHTML = item.photo ? `<img src="${item.photo}" alt="${esc(item.name)}">` : catIcon(item.category);
   document.getElementById('detailTitle').textContent = item.name;
   document.getElementById('detailBadges').innerHTML = `
-    <span class="mbadge">${catEmoji(item.category)}${esc(item.category)}</span>
-    <span class="mbadge">📍 ${esc(item.locationFound)}</span>
-    <span class="mbadge">🗓 ${fmtDate(item.createdAt)}</span>
+    <span class="mbadge">${catIcon(item.category)}${esc(item.category)}</span>
+    <span class="mbadge">${icon('mapPin')} ${esc(item.locationFound)}</span>
+    <span class="mbadge">${icon('calendar')} ${fmtDate(item.createdAt)}</span>
     <span class="mbadge" style="background:rgba(255,255,255,0.18)">${statusText(item.status).toUpperCase()}</span>`;
   document.getElementById('detailDesc').textContent = item.description || 'No description provided.';
   
@@ -653,7 +683,8 @@ document.addEventListener('keydown', e => {
 function toast(msg, type = '') {
   const c = document.getElementById('toasts');
   const t = document.createElement('div');
-  t.className = `toast ${type}`; t.innerHTML = msg;
+  const toastIcon = { ok: 'checkCircle', err: 'alertCircle', info: 'infoCircle' }[type] || 'infoCircle';
+  t.className = `toast ${type}`; t.innerHTML = icon(toastIcon) + `<span>${msg}</span>`;
   t.style.animation = 'toastIn 0.3s cubic-bezier(0.34,1.3,0.64,1) forwards';
   c.appendChild(t);
   setTimeout(() => { t.style.animation = 'toastOut 0.3s forwards'; setTimeout(() => t.remove(), 300); }, 3200);
@@ -664,7 +695,7 @@ function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&
 function fmtDate(iso) { if (!iso) return ''; return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
 function fmtDateTime(iso) { if (!iso) return '—'; return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); }
 function statusText(s) { return { unclaimed: 'Unclaimed', claimed: 'Claimed', returned: 'Returned' }[s] || s; }
-function catEmoji(c) { const m = { Electronics: '📱', Clothing: '👕', Accessories: '👜', 'School Supplies': '📚', 'Water Bottle': '🍶', Keys: '🔑', 'Sports Equipment': '⚽', Books: '📖', Instrument: '🎸', Other: '📦' }; return m[c] || '📦'; }
+function catIcon(c, cls) { return icon(CAT_ICON[c] || 'package', cls); }
 
 // ─── INIT ────────────────────────────────────────────
 (function init() {
