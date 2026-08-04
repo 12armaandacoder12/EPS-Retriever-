@@ -1,5 +1,5 @@
 // ─── CONSTANTS ─────────────────────────────────────
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyfklqB9sdGAusJ3UJwn_FJjcCQ1R15marvQVhDC1lywkpcPF8CZ6cMixZyMVyg9Xef/exec';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxF5TxA_ZaGdWgDXPMbMI5d4zzZ_8gcsUbe7eU6ZquMzPFvNVWLIki021bxth6JUKQi/exec';
 
 // ─── ICON LIBRARY (replaces all emoji glyphs) ──────
 const ICONS = {
@@ -469,41 +469,99 @@ dz.addEventListener('drop', e => {
 });
 dz.addEventListener('click', () => openGallery());
 
-function submitItem() {
-  const name = document.getElementById('itemName').value.trim();
-  const cat = document.getElementById('category').value;
+async function submitItem() {
   const loc = document.getElementById('locationFound').value.trim();
-  const staff = document.getElementById('staffName').value.trim();
   const staffEmail = document.getElementById('staffEmail').value.trim();
 
-  if (!name || !cat || !loc || !staff) { toast('Please fill in all required fields', 'err'); return; }
+  if (!photoData) { toast('Please add a photo so the item can be identified', 'err'); return; }
+  if (!loc) { toast('Please fill in where it was found', 'err'); return; }
   if (staffEmail && !isValidEPSEmail(staffEmail)) {
     toast('Please enter a valid @eastsideprep.org email address, or leave it blank.', 'err');
     return;
   }
 
-  const item = {
-    id: uid(), name, category: cat, locationFound: loc,
-    description: document.getElementById('description').value.trim(),
-    staffName: staff,
+  const id = uid();
+  const timestamp = new Date().toISOString();
+  const payload = {
+    token: currentToken || '',
+    event: 'UPLOAD',
+    timestamp,
+    id,
+    location: loc,
     staffEmail: staffEmail,
-    photo: photoData,
     status: 'unclaimed',
-    createdAt: new Date().toISOString(),
-    claimedBy: '', claimedId: '', claimedContact: '', claimedAt: '',
-    returnedAt: '', returnedBy: '', returnedByEmail: ''
+    photo: photoData
   };
 
-  items.unshift(item);
-  logToSheet('UPLOAD', item);
-  
-  ['itemName', 'locationFound', 'description', 'staffName', 'staffEmail'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('category').value = '';
-  resetPhoto();
-  toast('Item added to Lost & Found!', 'ok');
-  setTimeout(() => switchView('browse'), 600);
+  const submitBtn = document.getElementById('submitItemBtn');
+  const originalLabel = submitBtn.innerHTML;
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = `<span class="btn-spinner-wrap">${spinner()}Identifying item…</span>`;
+
+  console.log('[EPS Retriever] Sending photo to Sheet for AI analysis:', { ...payload, photo: '[omitted, ' + photoData.length + ' chars]' });
+
+  try {
+    const res = await fetch(SHEET_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    console.log('[EPS Retriever] Sheet response:', result);
+
+    if (!result.ok) {
+      // This is a hard failure from the Apps Script (bad session, sheet write
+      // error, uncaught exception, etc) — result.error is whatever err.message
+      // the server-side catch block captured.
+      console.error('[EPS Retriever] Sheet error:', result.error);
+      toast('Error saving item: ' + (result.error || 'Unknown error'), 'err');
+      return;
+    }
+
+    if (result.aiError) {
+      // The row still saved (with placeholder name/category), but the
+      // Cerebras call itself failed — surface exactly why so it's debuggable
+      // from the browser console, same detail the Apps Script execution log has.
+      console.error('[EPS Retriever] AI photo analysis failed:', result.aiError);
+      toast('Saved, but AI identification failed — check console for details', 'err');
+    } else {
+      // No hard error, but log what the model actually said — if it keeps
+      // resolving to "Unidentified Item" with no error, this is what shows
+      // whether the model is seeing the photo at all or just refusing.
+      console.log('[EPS Retriever] AI raw model output:', result.aiRaw);
+    }
+
+    const item = {
+      id,
+      name: result.name || 'Unidentified Item',
+      category: result.category || 'Other',
+      locationFound: loc,
+      description: result.description || '',
+      staffName: '',
+      staffEmail: staffEmail,
+      photo: photoData,
+      status: 'unclaimed',
+      createdAt: timestamp,
+      claimedBy: '', claimedId: '', claimedContact: '', claimedAt: '',
+      returnedAt: '', returnedBy: '', returnedByEmail: ''
+    };
+
+    items.unshift(item);
+    console.log(`[EPS Retriever] Successfully logged UPLOAD for item ${item.id} — AI identified it as "${item.name}" (${item.category})`);
+
+    ['locationFound', 'staffEmail'].forEach(fid => {
+      const el = document.getElementById(fid); if (el) el.value = '';
+    });
+    resetPhoto();
+    if (!result.aiError) toast(`Added "${item.name}" to Lost & Found!`, 'ok');
+    setTimeout(() => switchView('browse'), 600);
+  } catch (err) {
+    console.error('[EPS Retriever] Sheet log failed:', err);
+    toast('Failed to connect to sheet. Check your connection.', 'err');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalLabel;
+  }
 }
 
 // ─── DASHBOARD ──────────────────────────────────────

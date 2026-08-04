@@ -135,7 +135,7 @@
         <div>
           <div class="page-eyebrow">Staff Portal</div>
           <h1 class="page-title">Report a Found Item</h1>
-          <p class="page-meta">Fill in the details and a photo — takes about 30 seconds</p>
+          <p class="page-meta">Snap a photo and note where it was found — AI does the rest</p>
         </div>
       </div>
       <div class="upload-layout">
@@ -169,21 +169,12 @@
           <div class="up-body">
             <div class="fsec">
               <div class="fsec-title">Basic Info</div>
-              <div class="field"><label>Item Name <span class="req">*</span></label><input type="text" id="itemName" placeholder="e.g. Blue Hydro Flask, TI-84 Calculator"></div>
-              <div class="field frow">
-                <div><label>Category <span class="req">*</span></label>
-                  <select id="category"><option value="">Select…</option><option>Electronics</option><option>Clothing</option><option>Accessories</option><option>School Supplies</option><option>Water Bottle</option><option>Keys</option><option>Sports Equipment</option><option>Books</option><option>Instrument</option><option>Other</option></select>
-                </div>
-                <div><label>Where Found <span class="req">*</span></label><input type="text" id="locationFound" placeholder="e.g. Gym, Cafeteria, Room 204"></div>
-              </div>
-              <div class="field"><label>Description</label><textarea id="description" placeholder="Color, brand, distinguishing marks…"></textarea></div>
+              <div class="field"><label>Where Found <span class="req">*</span></label><input type="text" id="locationFound" placeholder="e.g. Gym, Cafeteria, Room 204"></div>
+              <div class="fhint">Add a photo above — AI fills in the item name, category, and description automatically.</div>
             </div>
             <div class="fsec">
               <div class="fsec-title">Staff Info</div>
-              <div class="field frow">
-                <div><label>Your Name <span class="req">*</span></label><input type="text" id="staffName" placeholder="Full name"></div>
-                <div><label>Your Email</label><input type="email" id="staffEmail" placeholder="you@eastsideprep.org"></div>
-              </div>
+              <div class="field"><label>Your Email</label><input type="email" id="staffEmail" placeholder="you@eastsideprep.org"></div>
               <div class="fhint">Used for internal records only.</div>
             </div>
             <button class="btn full" onclick="submitItem()" id="submitItemBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;margin-right:2px"><path d="M4 12l5.5 5.5L20 7"/></svg>Add to Lost &amp; Found</button>
